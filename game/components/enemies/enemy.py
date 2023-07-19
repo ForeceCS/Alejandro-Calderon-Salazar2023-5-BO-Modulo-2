@@ -2,7 +2,7 @@ import random
 import pygame
 from pygame.sprite import Sprite
 
-from game.utils.constants import ENEMY_1, SCREEN_WIDTH
+from game.utils.constants import ENEMY_1, ENEMY_2, SCREEN_WIDTH
 
 class Enemy(Sprite):
     ENEMY_WIDTH = 40
@@ -11,10 +11,11 @@ class Enemy(Sprite):
     X_POS_LIST = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550]
     SPEED_Y = 3
     SPEED_X = 5
-    MOV_X = {0:'left', 1:'right'}
+    MOV_X = {0: 'left', 1: 'right'}
 
     def __init__(self):
-        self.image = pygame.transform.scale(ENEMY_1, (self.ENEMY_WIDTH, self.ENEMY_HEIGHT))
+        random_image = random.choice([ENEMY_1, ENEMY_2])
+        self.image = pygame.transform.scale(random_image, (self.ENEMY_WIDTH, self.ENEMY_HEIGHT))
         self.rect = self.image.get_rect()
         self.rect.x = self.X_POS_LIST[random.randint(0, 10)]
         self.rect.y = self.Y_POS
@@ -24,16 +25,18 @@ class Enemy(Sprite):
         self.move_x_for = random.randint(30, 100)
         self.index = 0
 
+
+
     def update(self):
         self.rect.y += self.speed_y
         if self.movement_x == 'left':
             self.rect.x -= self.speed_x
         else:
-            self.rect.x += self.speed_x   
-        self.change_movement()     
+            self.rect.x += self.speed_x
+        self.change_movement()
 
     def draw(self, screen):
-        screen.blit(self.image, (self.rect.x, self.rect.y))    
+        screen.blit(self.image, (self.rect.x, self.rect.y))
 
     def change_movement(self):
         self.index += 1
@@ -42,5 +45,7 @@ class Enemy(Sprite):
                 self.movement_x = 'left'
             elif self.movement_x == 'left':
                 self.movement_x = 'right'
-            self.index = 0    
+            self.index = 0
+
+   
 
