@@ -21,12 +21,12 @@ class Spaceship(Sprite):
             if self.rect.left > 0:
                 self.rect.x -= self.SPEED
             else:
-                self.rect.x = SCREEN_WIDTH
+                self.rect.x = SCREEN_WIDTH - self.SPACESHIP_WIDTH
         elif user_input[pygame.K_RIGHT]:
             if self.rect.right < SCREEN_WIDTH:
                 self.rect.x += self.SPEED
             else:
-                self.rect.x = -self.SPACESHIP_WIDTH
+                self.rect.x = 0
         elif user_input[pygame.K_UP]:
             if self.rect.y > self.MAX_Y_POS:
                 self.rect.y -= self.SPEED
