@@ -1,4 +1,5 @@
 
+import random
 from game.components.enemies.enemy import Enemy
 from game.utils.constants import SCREEN_HEIGHT
 
@@ -23,5 +24,8 @@ class EnemyManager:
         if len(self.enemies) < 2:
             enemy = Enemy()
             self.enemies.append(enemy)
+            
+    def reset(self):
+        self.enemies = [] 
 
 
