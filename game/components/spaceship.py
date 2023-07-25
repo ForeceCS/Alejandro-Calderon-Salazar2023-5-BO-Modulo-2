@@ -1,46 +1,119 @@
 import pygame
-from pygame.sprite import Sprite
-from game.components.bullets.bullet import Bullet
-from game.utils.constants import SPACESHIP, SCREEN_HEIGHT, SCREEN_WIDTH
+import random
 
+from pygame.sprite import Sprite
+from game.utils.constants import SPACESHIP,SPACESHIP_SHIELD, SCREEN_HEIGHT, SCREEN_WIDTH
+from game.components.bullets.bullet_manager import BulletManager
+
+from game.components.bullets.bullet import Bullet
+REST = 10
 class Spaceship(Sprite):
-    SPACESHIP_WIDTH = 40
-    SPACESHIP_HEIGHT = 60
-    X_POS = (SCREEN_WIDTH // 2) - SPACESHIP_WIDTH // 2
+    X_POS = (SCREEN_WIDTH // 2) - 40
     Y_POS = 500
-    MAX_Y_POS = SCREEN_HEIGHT // 2  # La mitad de la altura de la pantalla
-    SPEED = 10
+# Duración del escudo y disparo en milisegundos (5 segundos)    
+    SHIELD_DURATION = 5000  
+    SHOT_DURATION = 5000  
 
     def __init__(self):
-        self.image = pygame.transform.scale(SPACESHIP, (self.SPACESHIP_WIDTH, self.SPACESHIP_HEIGHT))
+        self.original_image = SPACESHIP
+        self.original_image = pygame.transform.scale(self.original_image, (40, 60))
+        self.image = self.original_image.copy()
         self.rect = self.image.get_rect()
         self.rect.x = self.X_POS
         self.rect.y = self.Y_POS
         self.type = 'player'
+        self.shield_active = False
+        self.fireshot = False
+
+        self.shield_timer = 0
+        self.bullet_manager = BulletManager()
+        self.shielsound = pygame.mixer.Sound("game/assets/Sountrack/shield.mp3")
+
+    def reduce_life(self):
+        if self.lives > 0:
+            self.lives -= 1
 
     def update(self, user_input, game):
+        self.update_shield()
+        self.update_shot()
         if user_input[pygame.K_LEFT]:
-            if self.rect.left > 0:
-                self.rect.x -= self.SPEED
-            else:
-                self.rect.x = SCREEN_WIDTH - self.SPACESHIP_WIDTH
-        elif user_input[pygame.K_RIGHT]:
-            if self.rect.right < SCREEN_WIDTH:
-                self.rect.x += self.SPEED
-            else:
-                self.rect.x = 0
-        elif user_input[pygame.K_UP]:
-            if self.rect.y > self.MAX_Y_POS:
-                self.rect.y -= self.SPEED
-        elif user_input[pygame.K_DOWN]:
-            if self.rect.y < SCREEN_HEIGHT - self.SPACESHIP_HEIGHT:
-                self.rect.y += self.SPEED
-        elif user_input[pygame.K_SPACE]:    
-            self.shoot(game)  
+            self.move_left()
+        if user_input[pygame.K_RIGHT]:
+            self.move_right()
+        if user_input[pygame.K_UP]:
+            self.move_up()
+        if user_input[pygame.K_DOWN]:
+            self.move_down()
+        if user_input[pygame.K_SPACE]:
+            self.shoot(game)
+        if user_input[pygame.K_ESCAPE]:
+            pygame.quit()
+    
+    def move_left(self):
+        if self.rect.left > 0:
+            self.rect.x -= REST
+        elif self.rect.left < REST:
+            self.rect.x = SCREEN_WIDTH - REST    
 
-    def draw(self, screen):
-        screen.blit(self.image, (self.rect.x, self.rect.y))
+    def move_right(self):
+        if self.rect.right < SCREEN_WIDTH:
+            self.rect.x += REST
+        elif self.rect.right > SCREEN_WIDTH - REST:
+            self.rect.x = 0 + REST
 
+    def move_up(self):
+        if self.rect.y > SCREEN_HEIGHT // 2:
+            self.rect.y -= REST
+
+    def move_down(self):
+        if self.rect.y < SCREEN_HEIGHT - 70:
+            self.rect.y += REST
+
+
+# Método para disparar una bala
     def shoot(self, game):
-        bullet = Bullet(self)   
-        game.bullet_manager.add_bullet(bullet) 
+        if not self.shield_active:  # Solo puede disparar si el escudo no está activo
+            bullet = Bullet(self)
+            game.bullet_manager.add_bullet(bullet, self.type)
+
+  # Método para dibujar la nave en la pantalla
+    def draw(self, screen):
+        if self.shield_active:
+            # Escalar la imagen con el escudo activado
+            scaled_width = int(self.original_image.get_width() * 1.5)  # Ajusta el factor de escala según sea necesario
+            scaled_height = int(self.original_image.get_height() * 1.5)
+            scaled_image = pygame.transform.scale(SPACESHIP_SHIELD, (60, 70))
+            screen.blit(scaled_image, (self.rect.x - (scaled_width - self.rect.width) // 2, self.rect.y - (scaled_height - self.rect.height) // 2))
+        else:
+            # Dibujar la imagen original sin cambios
+            screen.blit(self.original_image, (self.rect.x, self.rect.y))
+
+
+ # Método para activar el escudo
+    def activate_shield(self):
+        self.shielsound.play()
+        self.shielsound.set_volume(0.5)
+        if not self.shield_active:  # Activar el escudo solo si no está activo
+            self.shield_active = True
+            self.shield_timer = pygame.time.get_ticks()
+
+   # Método para actualizar el estado del escudo
+    def update_shield(self):
+        if self.shield_active:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.shield_timer >= self.SHIELD_DURATION:
+                self.shield_active = False
+
+
+    # Método para activar el disparo especial
+    def activate_shot(self):
+        if not self.fireshot:  # Activar el escudo solo si no está activo
+            self.fireshot = True
+            self.shot_timer = pygame.time.get_ticks()
+
+  # Método para actualizar el estado del disparo especial
+    def update_shot(self):
+        if self.fireshot:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.shot_timer >= self.SHOT_DURATION:
+                self.fireshot = False
